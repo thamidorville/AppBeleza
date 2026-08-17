@@ -1,0 +1,15 @@
+
+.env
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.log
+
+.vs/
+
+node_modules/
+
+Thumbs.db
+.DS_Store

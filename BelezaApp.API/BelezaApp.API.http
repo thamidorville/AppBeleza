@@ -1,0 +1,6 @@
+@BelezaApp.API_HostAddress = http://localhost:5050
+
+GET {{BelezaApp.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
