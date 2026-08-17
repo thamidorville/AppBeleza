@@ -18,6 +18,42 @@ public class FuncionarioController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("meus-funcionarios")]
+    [Authorize(Roles = "Gestor,Admin")]
+    public async Task<IActionResult> ObterMeusFuncionarios()
+    {
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
+        var role = TokenClaimsHelper.ObterRole(User);
+
+        if (string.IsNullOrEmpty(emailUsuarioToken) || string.IsNullOrEmpty(role))
+            return Unauthorized("Token inválido.");
+
+        try
+        {
+            var usuario = await _service.ObterGestorPorEmail(emailUsuarioToken);
+            if (usuario == null) return Unauthorized("Usuário não encontrado.");
+
+            var funcionarios = await _service.ObterTodosPorUsuarioId(usuario.Id, emailUsuarioToken, role);
+
+            var response = funcionarios.Select(f => new FuncionarioResponseDTO
+            {
+                Id = HashIdHelper.Encode(f.Id),
+                UsuarioId = HashIdHelper.Encode(f.UsuarioId),
+                Nome = f.Nome,
+                Email = f.Email,
+                Telefone = f.Telefone,
+                Ativo = f.Ativo,
+                CriadoEm = f.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
     [HttpGet("usuario/{id}")]
     [Authorize(Roles = "Gestor,Admin")]
     public async Task<IActionResult> ObterTodosPorUsuarioId(string id)
@@ -25,26 +61,33 @@ public class FuncionarioController : ControllerBase
         var usuarioId = HashIdHelper.Decode(id);
         if (usuarioId == 0) return BadRequest("Id de usuário inválido.");
 
-        var tokenUsuarioId = TokenClaimsHelper.ObterUsuarioId(User);
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (tokenUsuarioId != usuarioId && role != "Admin")
-            return Forbid();
+        if (string.IsNullOrEmpty(emailUsuarioToken) || string.IsNullOrEmpty(role))
+            return Unauthorized("Token inválido.");
 
-        var funcionarios = await _service.ObterTodosPorUsuarioId(usuarioId);
-
-        var response = funcionarios.Select(f => new FuncionarioResponseDTO
+        try
         {
-            Id = HashIdHelper.Encode(f.Id),
-            UsuarioId = HashIdHelper.Encode(f.UsuarioId),
-            Nome = f.Nome,
-            Email = f.Email,
-            Telefone = f.Telefone,
-            Ativo = f.Ativo,
-            CriadoEm = f.CriadoEm
-        });
+            var funcionarios = await _service.ObterTodosPorUsuarioId(usuarioId, emailUsuarioToken, role);
 
-        return Ok(response);
+            var response = funcionarios.Select(f => new FuncionarioResponseDTO
+            {
+                Id = HashIdHelper.Encode(f.Id),
+                UsuarioId = HashIdHelper.Encode(f.UsuarioId),
+                Nome = f.Nome,
+                Email = f.Email,
+                Telefone = f.Telefone,
+                Ativo = f.Ativo,
+                CriadoEm = f.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("{id}")]
@@ -75,32 +118,39 @@ public class FuncionarioController : ControllerBase
     [Authorize(Roles = "Gestor")]
     public async Task<IActionResult> Criar([FromBody] FuncionarioRequestDTO request)
     {
-        var usuarioId = HashIdHelper.Decode(request.UsuarioId);
-        if (usuarioId == 0) return BadRequest("Id de usuário inválido.");
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailUsuarioToken))
+            return Unauthorized("Token inválido.");
 
         var funcionario = new Funcionario
         {
-            UsuarioId = usuarioId,
             Nome = request.Nome,
             Email = request.Email,
             Senha = request.Senha,
             Telefone = request.Telefone
         };
 
-        var id = await _service.Criar(funcionario);
-
-        var response = new FuncionarioResponseDTO
+        try
         {
-            Id = HashIdHelper.Encode(id),
-            UsuarioId = request.UsuarioId,
-            Nome = funcionario.Nome,
-            Email = funcionario.Email,
-            Telefone = funcionario.Telefone,
-            Ativo = true,
-            CriadoEm = DateTime.UtcNow
-        };
+            var id = await _service.Criar(funcionario, emailUsuarioToken);
 
-        return Created($"api/funcionario/{response.Id}", response);
+            var response = new FuncionarioResponseDTO
+            {
+                Id = HashIdHelper.Encode(id),
+                UsuarioId = "",
+                Nome = funcionario.Nome,
+                Email = funcionario.Email,
+                Telefone = funcionario.Telefone,
+                Ativo = true,
+                CriadoEm = DateTime.UtcNow
+            };
+
+            return Created($"api/funcionario/{response.Id}", response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid();
+        }
     }
 
     [HttpPut("{id}")]

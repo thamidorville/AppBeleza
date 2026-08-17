@@ -46,11 +46,18 @@ public class UsuarioController : ControllerBase
         var usuarioId = HashIdHelper.Decode(id);
         if (usuarioId == 0) return BadRequest("Id inválido.");
 
-        var tokenUsuarioId = TokenClaimsHelper.ObterUsuarioId(User);
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (tokenUsuarioId != usuarioId && role != "Admin")
-            return Forbid();
+        if (string.IsNullOrEmpty(emailUsuarioToken) || string.IsNullOrEmpty(role))
+            return Unauthorized("Token inválido.");
+
+        if (role != "Admin")
+        {
+            var usuarioToken = await _service.ObterPorEmail(emailUsuarioToken);
+            if (usuarioToken == null || usuarioToken.Id != usuarioId)
+                return Forbid();
+        }
 
         var usuario = await _service.ObterPorId(usuarioId);
         if (usuario == null) return NotFound("Usuário não encontrado.");
@@ -109,11 +116,18 @@ public class UsuarioController : ControllerBase
         var usuarioId = HashIdHelper.Decode(id);
         if (usuarioId == 0) return BadRequest("Id inválido.");
 
-        var tokenUsuarioId = TokenClaimsHelper.ObterUsuarioId(User);
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (tokenUsuarioId != usuarioId && role != "Admin")
-            return Forbid();
+        if (string.IsNullOrEmpty(emailUsuarioToken) || string.IsNullOrEmpty(role))
+            return Unauthorized("Token inválido.");
+
+        if (role != "Admin")
+        {
+            var usuarioToken = await _service.ObterPorEmail(emailUsuarioToken);
+            if (usuarioToken == null || usuarioToken.Id != usuarioId)
+                return Forbid();
+        }
 
         var usuario = new Usuario
         {

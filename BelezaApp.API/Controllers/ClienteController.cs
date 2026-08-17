@@ -42,22 +42,26 @@ public class ClienteController : ControllerBase
         var clienteId = HashIdHelper.Decode(id);
         if (clienteId == 0) return BadRequest("Id inválido.");
 
-        var tokenUsuarioId = TokenClaimsHelper.ObterUsuarioId(User);
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (tokenUsuarioId != clienteId && role != "Admin")
-            return Forbid();
+        if (role != "Admin")
+        {
+            var cliente = await _service.ObterPorEmail(emailUsuarioToken!);
+            if (cliente == null || cliente.Id != clienteId)
+                return Forbid();
+        }
 
-        var cliente = await _service.ObterPorId(clienteId);
-        if (cliente == null) return NotFound("Cliente não encontrado.");
+        var clienteResult = await _service.ObterPorId(clienteId);
+        if (clienteResult == null) return NotFound("Cliente não encontrado.");
 
         var response = new ClienteResponseDTO
         {
-            Id = HashIdHelper.Encode(cliente.Id),
-            Nome = cliente.Nome,
-            Email = cliente.Email,
-            Telefone = cliente.Telefone,
-            CriadoEm = cliente.CriadoEm
+            Id = HashIdHelper.Encode(clienteResult.Id),
+            Nome = clienteResult.Nome,
+            Email = clienteResult.Email,
+            Telefone = clienteResult.Telefone,
+            CriadoEm = clienteResult.CriadoEm
         };
 
         return Ok(response);
@@ -102,11 +106,15 @@ public class ClienteController : ControllerBase
         var clienteId = HashIdHelper.Decode(id);
         if (clienteId == 0) return BadRequest("Id inválido.");
 
-        var tokenUsuarioId = TokenClaimsHelper.ObterUsuarioId(User);
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (tokenUsuarioId != clienteId && role != "Admin")
-            return Forbid();
+        if (role != "Admin")
+        {
+            var clienteToken = await _service.ObterPorEmail(emailUsuarioToken!);
+            if (clienteToken == null || clienteToken.Id != clienteId)
+                return Forbid();
+        }
 
         var cliente = new Cliente
         {

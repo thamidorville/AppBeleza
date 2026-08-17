@@ -64,40 +64,12 @@ public class AuthController : ControllerBase
         }
     }
 
-    [HttpPost("login/usuario")]
-    public async Task<IActionResult> LoginUsuario([FromBody] LoginRequestDTO request)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
     {
         try
         {
-            var token = await _authService.LoginUsuario(request.Email, request.Senha);
-            return Ok(new { token });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Unauthorized(ex.Message);
-        }
-    }
-
-    [HttpPost("login/funcionario")]
-    public async Task<IActionResult> LoginFuncionario([FromBody] LoginRequestDTO request)
-    {
-        try
-        {
-            var token = await _authService.LoginFuncionario(request.Email, request.Senha);
-            return Ok(new { token });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return Unauthorized(ex.Message);
-        }
-    }
-
-    [HttpPost("login/cliente")]
-    public async Task<IActionResult> LoginCliente([FromBody] LoginRequestDTO request)
-    {
-        try
-        {
-            var token = await _authService.LoginCliente(request.Email, request.Senha);
+            var token = await _authService.Login(request.Email, request.Senha);
             return Ok(new { token });
         }
         catch (InvalidOperationException ex)
@@ -110,15 +82,15 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> AlterarSenha([FromBody] AlterarSenhaRequestDTO request)
     {
-        var id = TokenClaimsHelper.ObterUsuarioId(User);
+        var email = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (id == 0 || string.IsNullOrEmpty(role))
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(role))
             return Unauthorized("Token inválido.");
 
         try
         {
-            await _authService.AlterarSenha(id, role, request.SenhaAtual, request.NovaSenha);
+            await _authService.AlterarSenha(email, role, request.SenhaAtual, request.NovaSenha);
             return Ok(new { message = "Senha alterada com sucesso." });
         }
         catch (InvalidOperationException ex)

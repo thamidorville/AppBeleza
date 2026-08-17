@@ -22,6 +22,11 @@ public class UsuarioService : IUsuarioService
         return await _repository.ObterPorId(id);
     }
 
+    public async Task<Usuario?> ObterPorEmail(string email)
+    {
+        return await _repository.ObterPorEmail(email);
+    }
+
     public async Task<int> Criar(Usuario usuario)
     {
         usuario.Senha = Helpers.SenhaHelper.GerarHash(usuario.Senha);

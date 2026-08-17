@@ -6,6 +6,7 @@ public interface IUsuarioService
 {
     Task<IEnumerable<Usuario>> ObterTodos();
     Task<Usuario?> ObterPorId(int id);
+    Task<Usuario?> ObterPorEmail(string email);
     Task<int> Criar(Usuario usuario);
     Task Atualizar(Usuario usuario);
     Task Deletar(int id);

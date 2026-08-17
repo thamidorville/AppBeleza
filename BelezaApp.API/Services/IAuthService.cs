@@ -6,8 +6,6 @@ public interface IAuthService
 {
     Task CadastrarUsuario(Usuario usuario);
     Task CadastrarCliente(Cliente cliente);
-    Task<string> LoginUsuario(string email, string senha);
-    Task<string> LoginFuncionario(string email, string senha);
-    Task<string> LoginCliente(string email, string senha);
-    Task AlterarSenha(int id, string role, string senhaAtual, string novaSenha);
+    Task<string> Login(string email, string senha);
+    Task AlterarSenha(string email, string role, string senhaAtual, string novaSenha);
 }

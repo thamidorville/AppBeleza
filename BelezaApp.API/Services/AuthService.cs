@@ -33,54 +33,48 @@ public class AuthService : IAuthService
         await _clienteRepository.Criar(cliente);
     }
 
-    public async Task<string> LoginUsuario(string email, string senha)
+    public async Task<string> Login(string email, string senha)
     {
         var usuario = await _usuarioRepository.ObterPorEmail(email);
-        if (usuario == null || !SenhaHelper.Validar(senha, usuario.Senha))
-            throw new InvalidOperationException("Email ou senha inválidos.");
+        if (usuario != null && SenhaHelper.Validar(senha, usuario.Senha))
+            return TokenHelper.GerarToken(usuario.Email, usuario.Role, usuario.Nome);
 
-        return TokenHelper.GerarToken(usuario.Id, usuario.Email, usuario.Role);
-    }
-
-    public async Task<string> LoginFuncionario(string email, string senha)
-    {
         var funcionario = await _funcionarioRepository.ObterPorEmail(email);
-        if (funcionario == null || !SenhaHelper.Validar(senha, funcionario.Senha))
-            throw new InvalidOperationException("Email ou senha inválidos.");
+        if (funcionario != null && SenhaHelper.Validar(senha, funcionario.Senha))
+            return TokenHelper.GerarToken(funcionario.Email, "Funcionario", funcionario.Nome);
 
-        return TokenHelper.GerarToken(funcionario.Id, funcionario.Email, "Funcionario");
-    }
-
-    public async Task<string> LoginCliente(string email, string senha)
-    {
         var cliente = await _clienteRepository.ObterPorEmail(email);
-        if (cliente == null || !SenhaHelper.Validar(senha, cliente.Senha))
-            throw new InvalidOperationException("Email ou senha inválidos.");
+        if (cliente != null && SenhaHelper.Validar(senha, cliente.Senha))
+            return TokenHelper.GerarToken(cliente.Email, "Cliente", cliente.Nome);
 
-        return TokenHelper.GerarToken(cliente.Id, cliente.Email, "Cliente");
+        throw new InvalidOperationException("Email ou senha inválidos.");
     }
 
-    public async Task AlterarSenha(int id, string role, string senhaAtual, string novaSenha)
+    public async Task AlterarSenha(string email, string role, string senhaAtual, string novaSenha)
     {
         string? hashAtual = null;
+        int id = 0;
 
         if (role == "Gestor" || role == "Admin")
         {
-            var usuario = await _usuarioRepository.ObterPorId(id);
+            var usuario = await _usuarioRepository.ObterPorEmail(email);
             if (usuario == null) throw new InvalidOperationException("Usuário não encontrado.");
             hashAtual = usuario.Senha;
+            id = usuario.Id;
         }
         else if (role == "Funcionario")
         {
-            var funcionario = await _funcionarioRepository.ObterPorId(id);
+            var funcionario = await _funcionarioRepository.ObterPorEmail(email);
             if (funcionario == null) throw new InvalidOperationException("Funcionário não encontrado.");
             hashAtual = funcionario.Senha;
+            id = funcionario.Id;
         }
         else if (role == "Cliente")
         {
-            var cliente = await _clienteRepository.ObterPorId(id);
+            var cliente = await _clienteRepository.ObterPorEmail(email);
             if (cliente == null) throw new InvalidOperationException("Cliente não encontrado.");
             hashAtual = cliente.Senha;
+            id = cliente.Id;
         }
         else
         {

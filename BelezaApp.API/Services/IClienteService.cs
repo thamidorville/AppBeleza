@@ -6,6 +6,7 @@ public interface IClienteService
 {
     Task<IEnumerable<Cliente>> ObterTodos();
     Task<Cliente?> ObterPorId(int id);
+    Task<Cliente?> ObterPorEmail(string email);
     Task<int> Criar(Cliente cliente);
     Task Atualizar(Cliente cliente);
     Task Deletar(int id);

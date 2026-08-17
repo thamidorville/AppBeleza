@@ -22,6 +22,11 @@ public class ClienteService : IClienteService
         return await _repository.ObterPorId(id);
     }
 
+    public async Task<Cliente?> ObterPorEmail(string email)
+    {
+        return await _repository.ObterPorEmail(email);
+    }
+
     public async Task<int> Criar(Cliente cliente)
     {
         var emailJaCadastrado = await _repository.ObterPorEmail(cliente.Email);

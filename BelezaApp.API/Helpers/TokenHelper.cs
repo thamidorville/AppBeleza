@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 
 public static class TokenHelper
 {
-    public static string GerarToken(int id, string email, string role)
+    public static string GerarToken(string email, string role, string nome)
     {
         var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET")!;
         var key = Encoding.ASCII.GetBytes(jwtSecret);
@@ -16,9 +16,9 @@ public static class TokenHelper
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, id.ToString()),
                 new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Role, role) //É isso que o middleware de autorização lê quando verifica [Authorize(Roles = "Gestor")].
+                new Claim(ClaimTypes.Role, role),
+                new Claim(ClaimTypes.Name, nome)
             }),
             Expires = DateTime.UtcNow.AddHours(8),
             SigningCredentials = new SigningCredentials(

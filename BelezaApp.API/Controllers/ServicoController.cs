@@ -18,6 +18,40 @@ public class ServicoController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("meus-servicos")]
+    [Authorize(Roles = "Gestor,Admin")]
+    public async Task<IActionResult> ObterMeusServicos()
+    {
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
+        var role = TokenClaimsHelper.ObterRole(User);
+
+        if (string.IsNullOrEmpty(emailUsuarioToken) || string.IsNullOrEmpty(role))
+            return Unauthorized("Token inválido.");
+
+        try
+        {
+            var servicos = await _service.ObterMeusServicos(emailUsuarioToken);
+
+            var response = servicos.Select(s => new ServicoResponseDTO
+            {
+                Id = HashIdHelper.Encode(s.Id),
+                UsuarioId = HashIdHelper.Encode(s.UsuarioId),
+                Nome = s.Nome,
+                Descricao = s.Descricao,
+                Preco = s.Preco,
+                DuracaoMinutos = s.DuracaoMinutos,
+                Ativo = s.Ativo,
+                CriadoEm = s.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
     [HttpGet("usuario/{id}")]
     [Authorize(Roles = "Gestor,Admin")]
     public async Task<IActionResult> ObterTodosPorUsuarioId(string id)
@@ -25,27 +59,34 @@ public class ServicoController : ControllerBase
         var usuarioId = HashIdHelper.Decode(id);
         if (usuarioId == 0) return BadRequest("Id de usuário inválido.");
 
-        var tokenUsuarioId = TokenClaimsHelper.ObterUsuarioId(User);
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
         var role = TokenClaimsHelper.ObterRole(User);
 
-        if (tokenUsuarioId != usuarioId && role != "Admin")
-            return Forbid();
+        if (string.IsNullOrEmpty(emailUsuarioToken) || string.IsNullOrEmpty(role))
+            return Unauthorized("Token inválido.");
 
-        var servicos = await _service.ObterTodosPorUsuarioId(usuarioId);
-
-        var response = servicos.Select(s => new ServicoResponseDTO
+        try
         {
-            Id = HashIdHelper.Encode(s.Id),
-            UsuarioId = HashIdHelper.Encode(s.UsuarioId),
-            Nome = s.Nome,
-            Descricao = s.Descricao,
-            Preco = s.Preco,
-            DuracaoMinutos = s.DuracaoMinutos,
-            Ativo = s.Ativo,
-            CriadoEm = s.CriadoEm
-        });
+            var servicos = await _service.ObterTodosPorUsuarioId(usuarioId, emailUsuarioToken, role);
 
-        return Ok(response);
+            var response = servicos.Select(s => new ServicoResponseDTO
+            {
+                Id = HashIdHelper.Encode(s.Id),
+                UsuarioId = HashIdHelper.Encode(s.UsuarioId),
+                Nome = s.Nome,
+                Descricao = s.Descricao,
+                Preco = s.Preco,
+                DuracaoMinutos = s.DuracaoMinutos,
+                Ativo = s.Ativo,
+                CriadoEm = s.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet("{id}")]
@@ -77,24 +118,24 @@ public class ServicoController : ControllerBase
     [Authorize(Roles = "Gestor,Admin")]
     public async Task<IActionResult> Criar([FromBody] ServicoRequestDTO request)
     {
-        var usuarioId = HashIdHelper.Decode(request.UsuarioId);
-        if (usuarioId == 0) return BadRequest("Id de usuário inválido.");
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailUsuarioToken))
+            return Unauthorized("Token inválido.");
 
         var servico = new Servico
         {
-            UsuarioId = usuarioId,
             Nome = request.Nome,
             Descricao = request.Descricao,
             Preco = request.Preco,
             DuracaoMinutos = request.DuracaoMinutos
         };
 
-        var id = await _service.Criar(servico);
+        var id = await _service.Criar(servico, emailUsuarioToken);
 
         var response = new ServicoResponseDTO
         {
             Id = HashIdHelper.Encode(id),
-            UsuarioId = request.UsuarioId,
+            UsuarioId = "",
             Nome = servico.Nome,
             Descricao = servico.Descricao,
             Preco = servico.Preco,
@@ -102,8 +143,7 @@ public class ServicoController : ControllerBase
             Ativo = true,
             CriadoEm = DateTime.UtcNow
         };
-        
-        Console.WriteLine($"[SERVICO] Criado. Id real: {id}, HashId: {response.Id}");
+
         return Created($"api/servico/{response.Id}", response);
     }
 
