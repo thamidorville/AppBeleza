@@ -2,6 +2,7 @@ namespace BelezaApp.API.Repositories;
 
 using System.Data;
 using Dapper;
+using BelezaApp.API.DTOs;
 using BelezaApp.API.Models;
 
 public class AgendaRepository : IAgendaRepository
@@ -19,10 +20,19 @@ public class AgendaRepository : IAgendaRepository
         return await _connection.QueryAsync<Agenda>(sql, new { FuncionarioId = funcionarioId });
     }
 
-    public async Task<IEnumerable<Agenda>> ObterPorUsuarioId(int usuarioId)
+    public async Task<IEnumerable<AgendaComNomesDTO>> ObterPorUsuarioId(int usuarioId)
     {
-        var sql = "SELECT * FROM Agenda WHERE usuario_id = @UsuarioId AND disponivel = true";
-        return await _connection.QueryAsync<Agenda>(sql, new { UsuarioId = usuarioId });
+        var sql = @"SELECT a.id, a.funcionario_id, a.usuario_id, a.servico_id,
+                           a.data_agendamento, a.hora_inicio, a.hora_fim,
+                           a.disponivel, a.criado_em,
+                           f.nome AS funcionario_nome,
+                           s.nome AS servico_nome
+                    FROM Agenda a
+                    LEFT JOIN Funcionario f ON a.funcionario_id = f.id
+                    INNER JOIN Servico s ON a.servico_id = s.id
+                    WHERE a.usuario_id = @UsuarioId
+                    ORDER BY a.data_agendamento, a.hora_inicio";
+        return await _connection.QueryAsync<AgendaComNomesDTO>(sql, new { UsuarioId = usuarioId });
     }
 
     public async Task<Agenda?> ObterPorId(int id)

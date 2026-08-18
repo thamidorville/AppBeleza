@@ -54,8 +54,10 @@ public class AgendaController : ControllerBase
         {
             Id = HashIdHelper.Encode(a.Id),
             FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
+            FuncionarioNome = a.FuncionarioNome,
             UsuarioId = HashIdHelper.Encode(a.UsuarioId),
             ServicoId = HashIdHelper.Encode(a.ServicoId),
+            ServicoNome = a.ServicoNome,
             DataAgendamento = a.DataAgendamento,
             HoraInicio = a.HoraInicio,
             HoraFim = a.HoraFim,
@@ -66,10 +68,49 @@ public class AgendaController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("minha-agenda")]
+    [Authorize(Roles = "Gestor,Admin")]
+    public async Task<IActionResult> ObterMinhaAgenda()
+    {
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailUsuarioToken))
+            return Unauthorized("Token inválido.");
+
+        try
+        {
+            var agendas = await _service.ObterMinhaAgenda(emailUsuarioToken);
+
+            var response = agendas.Select(a => new AgendaResponseDTO
+            {
+                Id = HashIdHelper.Encode(a.Id),
+                FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
+                FuncionarioNome = a.FuncionarioNome,
+                UsuarioId = HashIdHelper.Encode(a.UsuarioId),
+                ServicoId = HashIdHelper.Encode(a.ServicoId),
+                ServicoNome = a.ServicoNome,
+                DataAgendamento = a.DataAgendamento,
+                HoraInicio = a.HoraInicio,
+                HoraFim = a.HoraFim,
+                Disponivel = a.Disponivel,
+                CriadoEm = a.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
     [HttpPost]
     [Authorize(Roles = "Gestor,Admin")]
     public async Task<IActionResult> Criar([FromBody] AgendaRequestDTO request)
     {
+        var emailUsuarioToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailUsuarioToken))
+            return Unauthorized("Token inválido.");
+
         int? funcionarioId = null;
 
         if (!string.IsNullOrEmpty(request.FuncionarioId))
@@ -78,16 +119,12 @@ public class AgendaController : ControllerBase
             if (funcionarioId == 0) return BadRequest("Id de funcionário inválido.");
         }
 
-        var usuarioId = HashIdHelper.Decode(request.UsuarioId);
-        if (usuarioId == 0) return BadRequest("Id de usuário inválido.");
-
         var servicoId = HashIdHelper.Decode(request.ServicoId);
         if (servicoId == 0) return BadRequest("Id de serviço inválido.");
 
         var agenda = new Agenda
         {
             FuncionarioId = funcionarioId,
-            UsuarioId = usuarioId,
             ServicoId = servicoId,
             DataAgendamento = request.DataAgendamento,
             HoraInicio = request.HoraInicio,
@@ -96,13 +133,13 @@ public class AgendaController : ControllerBase
 
         try
         {
-            var id = await _service.Criar(agenda);
+            var id = await _service.Criar(agenda, emailUsuarioToken);
 
             var response = new AgendaResponseDTO
             {
                 Id = HashIdHelper.Encode(id),
                 FuncionarioId = request.FuncionarioId,
-                UsuarioId = request.UsuarioId,
+                UsuarioId = "",
                 ServicoId = request.ServicoId,
                 DataAgendamento = request.DataAgendamento,
                 HoraInicio = request.HoraInicio,
@@ -112,6 +149,10 @@ public class AgendaController : ControllerBase
             };
 
             return Created($"api/agenda/{response.Id}", response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
         }
         catch (InvalidOperationException ex)
         {
