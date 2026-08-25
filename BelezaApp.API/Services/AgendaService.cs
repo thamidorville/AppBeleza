@@ -34,6 +34,11 @@ public class AgendaService : IAgendaService
         return await _repository.ObterPorUsuarioId(usuario.Id);
     }
 
+    public async Task<IEnumerable<AgendaComNomesDTO>> ObterVitrineDoCliente()
+    {
+        return await _repository.ObterVitrineDoCliente();
+    }
+
     public async Task<Agenda?> ObterPorId(int id)
     {
         return await _repository.ObterPorId(id);

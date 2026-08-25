@@ -6,9 +6,9 @@ public class Agenda
     public int? FuncionarioId { get; set; }
     public int UsuarioId { get; set; }
     public int ServicoId { get; set; }
-    public DateTime DataAgendamento { get; set; }
-    public DateTime HoraInicio { get; set; }
-    public DateTime HoraFim { get; set; }
+    public DateOnly DataAgendamento { get; set; }
+    public TimeOnly HoraInicio { get; set; }
+    public TimeOnly HoraFim { get; set; }
     public bool Disponivel { get; set; } = true;
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }

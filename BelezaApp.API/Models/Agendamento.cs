@@ -8,9 +8,9 @@ public class Agendamento
     public int ServicoId { get; set; }
     public int? FuncionarioId { get; set; }
     public int UsuarioId { get; set; }
-    public DateTime Data { get; set; }
-    public DateTime HorarioInicio { get; set; }
-    public DateTime HorarioFim { get; set; }
+    public DateOnly Data { get; set; }
+    public TimeOnly HorarioInicio { get; set; }
+    public TimeOnly HorarioFim { get; set; }
     public string Status { get; set; } = "Confirmado";
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }

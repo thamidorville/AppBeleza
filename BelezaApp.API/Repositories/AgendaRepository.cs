@@ -26,13 +26,32 @@ public class AgendaRepository : IAgendaRepository
                            a.data_agendamento, a.hora_inicio, a.hora_fim,
                            a.disponivel, a.criado_em,
                            f.nome AS funcionario_nome,
-                           s.nome AS servico_nome
+                           s.nome AS servico_nome,
+                           u.nome AS usuario_nome
                     FROM Agenda a
                     LEFT JOIN Funcionario f ON a.funcionario_id = f.id
                     INNER JOIN Servico s ON a.servico_id = s.id
+                    INNER JOIN Usuario u ON a.usuario_id = u.id
                     WHERE a.usuario_id = @UsuarioId
                     ORDER BY a.data_agendamento, a.hora_inicio";
         return await _connection.QueryAsync<AgendaComNomesDTO>(sql, new { UsuarioId = usuarioId });
+    }
+
+    public async Task<IEnumerable<AgendaComNomesDTO>> ObterVitrineDoCliente()
+    {
+        var sql = @"SELECT a.id, a.funcionario_id, a.usuario_id, a.servico_id,
+                           a.data_agendamento, a.hora_inicio, a.hora_fim,
+                           a.disponivel, a.criado_em,
+                           f.nome AS funcionario_nome,
+                           s.nome AS servico_nome,
+                           u.nome AS usuario_nome
+                    FROM Agenda a
+                    LEFT JOIN Funcionario f ON a.funcionario_id = f.id
+                    INNER JOIN Servico s ON a.servico_id = s.id
+                    INNER JOIN Usuario u ON a.usuario_id = u.id
+                    WHERE a.disponivel = true
+                    ORDER BY a.data_agendamento, a.hora_inicio";
+        return await _connection.QueryAsync<AgendaComNomesDTO>(sql, new { });
     }
 
     public async Task<Agenda?> ObterPorId(int id)

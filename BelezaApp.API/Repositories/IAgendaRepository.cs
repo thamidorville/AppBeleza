@@ -7,6 +7,7 @@ public interface IAgendaRepository
 {
     Task<IEnumerable<Agenda>> ObterPorFuncionarioId(int funcionarioId);
     Task<IEnumerable<AgendaComNomesDTO>> ObterPorUsuarioId(int usuarioId);
+    Task<IEnumerable<AgendaComNomesDTO>> ObterVitrineDoCliente();
     Task<Agenda?> ObterPorId(int id);
     Task<int> Criar(Agenda agenda);
     Task Atualizar(Agenda agenda);

@@ -19,6 +19,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("cadastro/usuario")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CadastrarUsuario([FromBody] UsuarioRequestDTO request)
     {
         var usuario = new Usuario

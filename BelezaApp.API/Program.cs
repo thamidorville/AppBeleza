@@ -11,6 +11,10 @@ using BelezaApp.API.Services;
 // Configura o Dapper para mapear snake_case (banco) para PascalCase (C#)
 DefaultTypeMap.MatchNamesWithUnderscores = true;
 
+// Ensina o Dapper a lidar com DateOnly e TimeOnly como parâmetros
+SqlMapper.AddTypeHandler(new BelezaApp.API.TypeHandlers.DateOnlyTypeHandler());
+SqlMapper.AddTypeHandler(new BelezaApp.API.TypeHandlers.TimeOnlyTypeHandler());
+
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load(".env");
@@ -81,6 +85,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new BelezaApp.API.Converters.DateTimeConverter());
+    options.JsonSerializerOptions.Converters.Add(new BelezaApp.API.Converters.DateOnlyConverter());
+    options.JsonSerializerOptions.Converters.Add(new BelezaApp.API.Converters.TimeOnlyConverter());
 });
 
 builder.Services.AddCors(options =>

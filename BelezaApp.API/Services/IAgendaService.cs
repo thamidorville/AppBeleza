@@ -8,6 +8,7 @@ public interface IAgendaService
     Task<IEnumerable<Agenda>> ObterPorFuncionarioId(int funcionarioId);
     Task<IEnumerable<AgendaComNomesDTO>> ObterPorUsuarioId(int usuarioId);
     Task<IEnumerable<AgendaComNomesDTO>> ObterMinhaAgenda(string emailUsuarioToken);
+    Task<IEnumerable<AgendaComNomesDTO>> ObterVitrineDoCliente();
     Task<Agenda?> ObterPorId(int id);
     Task<int> Criar(Agenda agenda, string emailUsuarioToken);
     Task Atualizar(Agenda agenda);

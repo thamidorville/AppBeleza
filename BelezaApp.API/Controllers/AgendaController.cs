@@ -42,6 +42,7 @@ public class AgendaController : ControllerBase
         return Ok(response);
     }
 
+//esse endpoint vai servir pro cliente listar a agenda de um profissional em específico
     [HttpGet("usuario/{id}")]
     public async Task<IActionResult> ObterPorUsuarioId(string id)
     {
@@ -56,6 +57,31 @@ public class AgendaController : ControllerBase
             FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
             FuncionarioNome = a.FuncionarioNome,
             UsuarioId = HashIdHelper.Encode(a.UsuarioId),
+            ServicoId = HashIdHelper.Encode(a.ServicoId),
+            ServicoNome = a.ServicoNome,
+            DataAgendamento = a.DataAgendamento,
+            HoraInicio = a.HoraInicio,
+            HoraFim = a.HoraFim,
+            Disponivel = a.Disponivel,
+            CriadoEm = a.CriadoEm
+        });
+
+        return Ok(response);
+    }
+
+    [HttpGet("vitrine-do-cliente")]
+    [Authorize(Roles = "Cliente,Admin")]
+    public async Task<IActionResult> ObterVitrineDoCliente()
+    {
+        var agendas = await _service.ObterVitrineDoCliente();
+
+        var response = agendas.Select(a => new AgendaResponseDTO
+        {
+            Id = HashIdHelper.Encode(a.Id),
+            FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
+            FuncionarioNome = a.FuncionarioNome,
+            UsuarioId = HashIdHelper.Encode(a.UsuarioId),
+            UsuarioNome = a.UsuarioNome,
             ServicoId = HashIdHelper.Encode(a.ServicoId),
             ServicoNome = a.ServicoNome,
             DataAgendamento = a.DataAgendamento,

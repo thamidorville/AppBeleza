@@ -44,6 +44,83 @@ public class AgendamentoController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("meus-agendamentos")]
+    [Authorize(Roles = "Cliente")]
+    public async Task<IActionResult> ObterMeusAgendamentos()
+    {
+        var emailClienteToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailClienteToken))
+            return Unauthorized("Token inválido.");
+
+        try
+        {
+            var agendamentos = await _service.ObterMeusAgendamentos(emailClienteToken);
+
+            var response = agendamentos.Select(a => new AgendamentoResponseDTO
+            {
+                Id = HashIdHelper.Encode(a.Id),
+                AgendaId = HashIdHelper.Encode(a.AgendaId),
+                ClienteId = HashIdHelper.Encode(a.ClienteId),
+                ServicoId = HashIdHelper.Encode(a.ServicoId),
+                ServicoNome = a.ServicoNome,
+                FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
+                FuncionarioNome = a.FuncionarioNome,
+                UsuarioId = HashIdHelper.Encode(a.UsuarioId),
+                UsuarioNome = a.UsuarioNome,
+                Data = a.Data,
+                HorarioInicio = a.HorarioInicio,
+                HorarioFim = a.HorarioFim,
+                Status = a.Status,
+                CriadoEm = a.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
+    [HttpGet("meus-agendamentos-gestor")]
+    [Authorize(Roles = "Gestor")]
+    public async Task<IActionResult> ObterMeusAgendamentosGestor()
+    {
+        var emailGestorToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailGestorToken))
+            return Unauthorized("Token inválido.");
+
+        try
+        {
+            var agendamentos = await _service.ObterMeusAgendamentosGestor(emailGestorToken);
+
+            var response = agendamentos.Select(a => new AgendamentoResponseDTO
+            {
+                Id = HashIdHelper.Encode(a.Id),
+                AgendaId = HashIdHelper.Encode(a.AgendaId),
+                ClienteId = HashIdHelper.Encode(a.ClienteId),
+                ClienteNome = a.ClienteNome,
+                ServicoId = HashIdHelper.Encode(a.ServicoId),
+                ServicoNome = a.ServicoNome,
+                FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
+                FuncionarioNome = a.FuncionarioNome,
+                UsuarioId = HashIdHelper.Encode(a.UsuarioId),
+                UsuarioNome = a.UsuarioNome,
+                Data = a.Data,
+                HorarioInicio = a.HorarioInicio,
+                HorarioFim = a.HorarioFim,
+                Status = a.Status,
+                CriadoEm = a.CriadoEm
+            });
+
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+    }
+
     [HttpGet("funcionario/{id}")]
     public async Task<IActionResult> ObterPorFuncionarioId(string id)
     {
@@ -74,57 +151,25 @@ public class AgendamentoController : ControllerBase
     [Authorize(Roles = "Cliente,Admin")]
     public async Task<IActionResult> Criar([FromBody] AgendamentoRequestDTO request)
     {
+        var emailClienteToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailClienteToken))
+            return Unauthorized("Token inválido.");
+
         var agendaId = HashIdHelper.Decode(request.AgendaId);
         if (agendaId == 0) return BadRequest("Id de agenda inválido.");
 
-        var clienteId = HashIdHelper.Decode(request.ClienteId);
-        if (clienteId == 0) return BadRequest("Id de cliente inválido.");
-
-        var servicoId = HashIdHelper.Decode(request.ServicoId);
-        if (servicoId == 0) return BadRequest("Id de serviço inválido.");
-
-        var usuarioId = HashIdHelper.Decode(request.UsuarioId);
-        if (usuarioId == 0) return BadRequest("Id de usuário inválido.");
-
-        int? funcionarioId = null;
-        if (!string.IsNullOrEmpty(request.FuncionarioId))
-        {
-            funcionarioId = HashIdHelper.Decode(request.FuncionarioId);
-            if (funcionarioId == 0) return BadRequest("Id de funcionário inválido.");
-        }
-
-        var agendamento = new Agendamento
-        {
-            AgendaId = agendaId,
-            ClienteId = clienteId,
-            ServicoId = servicoId,
-            FuncionarioId = funcionarioId,
-            UsuarioId = usuarioId,
-            Data = request.Data,
-            HorarioInicio = request.HorarioInicio,
-            HorarioFim = request.HorarioFim
-        };
-
         try
         {
-            var id = await _service.Criar(agendamento);
-
-            var response = new AgendamentoResponseDTO
+            var id = await _service.Criar(agendaId, emailClienteToken);
+            return Created($"api/agendamento/{HashIdHelper.Encode(id)}", new
             {
-                Id = HashIdHelper.Encode(id),
-                AgendaId = request.AgendaId,
-                ClienteId = request.ClienteId,
-                ServicoId = request.ServicoId,
-                FuncionarioId = request.FuncionarioId,
-                UsuarioId = request.UsuarioId,
-                Data = request.Data,
-                HorarioInicio = request.HorarioInicio,
-                HorarioFim = request.HorarioFim,
-                Status = "Confirmado",
-                CriadoEm = DateTime.UtcNow
-            };
-
-            return Created($"api/agendamento/{response.Id}", response);
+                id = HashIdHelper.Encode(id),
+                message = "Agendamento realizado com sucesso."
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
         }
         catch (InvalidOperationException ex)
         {
