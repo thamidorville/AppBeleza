@@ -16,7 +16,7 @@ public class AgendaRepository : IAgendaRepository
 
     public async Task<IEnumerable<Agenda>> ObterPorFuncionarioId(int funcionarioId)
     {
-        var sql = "SELECT * FROM Agenda WHERE funcionario_id = @FuncionarioId AND disponivel = true";
+        var sql = "SELECT * FROM Agenda WHERE funcionario_id = @FuncionarioId AND status = 'Disponivel'";
         return await _connection.QueryAsync<Agenda>(sql, new { FuncionarioId = funcionarioId });
     }
 
@@ -24,7 +24,7 @@ public class AgendaRepository : IAgendaRepository
     {
         var sql = @"SELECT a.id, a.funcionario_id, a.usuario_id, a.servico_id,
                            a.data_agendamento, a.hora_inicio, a.hora_fim,
-                           a.disponivel, a.criado_em,
+                           a.status, a.criado_em,
                            f.nome AS funcionario_nome,
                            s.nome AS servico_nome,
                            u.nome AS usuario_nome
@@ -41,7 +41,7 @@ public class AgendaRepository : IAgendaRepository
     {
         var sql = @"SELECT a.id, a.funcionario_id, a.usuario_id, a.servico_id,
                            a.data_agendamento, a.hora_inicio, a.hora_fim,
-                           a.disponivel, a.criado_em,
+                           a.status, a.criado_em,
                            f.nome AS funcionario_nome,
                            s.nome AS servico_nome,
                            u.nome AS usuario_nome
@@ -49,7 +49,7 @@ public class AgendaRepository : IAgendaRepository
                     LEFT JOIN Funcionario f ON a.funcionario_id = f.id
                     INNER JOIN Servico s ON a.servico_id = s.id
                     INNER JOIN Usuario u ON a.usuario_id = u.id
-                    WHERE a.disponivel = true
+                    WHERE a.status = 'Disponivel'
                     ORDER BY a.data_agendamento, a.hora_inicio";
         return await _connection.QueryAsync<AgendaComNomesDTO>(sql, new { });
     }
@@ -71,7 +71,7 @@ public class AgendaRepository : IAgendaRepository
     public async Task Atualizar(Agenda agenda)
     {
         var sql = @"UPDATE Agenda SET servico_id = @ServicoId, data_agendamento = @DataAgendamento,
-                    hora_inicio = @HoraInicio, hora_fim = @HoraFim, disponivel = @Disponivel, atualizado_em = NOW()
+                    hora_inicio = @HoraInicio, hora_fim = @HoraFim, status = @Status::status_agenda_enum, atualizado_em = NOW()
                     WHERE id = @Id";
         await _connection.ExecuteAsync(sql, agenda);
     }

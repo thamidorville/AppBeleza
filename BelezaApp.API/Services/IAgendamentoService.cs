@@ -11,5 +11,7 @@ public interface IAgendamentoService
     Task<IEnumerable<Agendamento>> ObterPorFuncionarioId(int funcionarioId);
     Task<Agendamento?> ObterPorId(int id);
     Task<int> Criar(int agendaId, string emailClienteToken);
+    Task CancelarMeuAgendamento(int agendamentoId, string emailClienteToken, string motivo);
+    Task CancelarComoGestor(int agendamentoId, string emailGestorToken, string motivo);
     Task AtualizarStatus(int id, string status);
 }

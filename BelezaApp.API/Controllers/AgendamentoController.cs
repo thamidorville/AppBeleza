@@ -31,13 +31,20 @@ public class AgendamentoController : ControllerBase
             Id = HashIdHelper.Encode(a.Id),
             AgendaId = HashIdHelper.Encode(a.AgendaId),
             ClienteId = HashIdHelper.Encode(a.ClienteId),
+            ClienteNome = a.ClienteNome,
             ServicoId = HashIdHelper.Encode(a.ServicoId),
+            ServicoNome = a.ServicoNome,
+            ServicoPreco = a.ServicoPreco,
             FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
+            FuncionarioNome = a.FuncionarioNome,
             UsuarioId = HashIdHelper.Encode(a.UsuarioId),
+            UsuarioNome = a.UsuarioNome,
             Data = a.Data,
             HorarioInicio = a.HorarioInicio,
             HorarioFim = a.HorarioFim,
             Status = a.Status,
+            MotivoCancelamento = a.MotivoCancelamento,
+            CanceladoPor = a.CanceladoPor,
             CriadoEm = a.CriadoEm
         });
 
@@ -63,6 +70,7 @@ public class AgendamentoController : ControllerBase
                 ClienteId = HashIdHelper.Encode(a.ClienteId),
                 ServicoId = HashIdHelper.Encode(a.ServicoId),
                 ServicoNome = a.ServicoNome,
+                ServicoPreco = a.ServicoPreco,
                 FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
                 FuncionarioNome = a.FuncionarioNome,
                 UsuarioId = HashIdHelper.Encode(a.UsuarioId),
@@ -71,6 +79,8 @@ public class AgendamentoController : ControllerBase
                 HorarioInicio = a.HorarioInicio,
                 HorarioFim = a.HorarioFim,
                 Status = a.Status,
+                MotivoCancelamento = a.MotivoCancelamento,
+                CanceladoPor = a.CanceladoPor,
                 CriadoEm = a.CriadoEm
             });
 
@@ -102,6 +112,7 @@ public class AgendamentoController : ControllerBase
                 ClienteNome = a.ClienteNome,
                 ServicoId = HashIdHelper.Encode(a.ServicoId),
                 ServicoNome = a.ServicoNome,
+                ServicoPreco = a.ServicoPreco,
                 FuncionarioId = a.FuncionarioId.HasValue ? HashIdHelper.Encode(a.FuncionarioId.Value) : null,
                 FuncionarioNome = a.FuncionarioNome,
                 UsuarioId = HashIdHelper.Encode(a.UsuarioId),
@@ -110,6 +121,8 @@ public class AgendamentoController : ControllerBase
                 HorarioInicio = a.HorarioInicio,
                 HorarioFim = a.HorarioFim,
                 Status = a.Status,
+                MotivoCancelamento = a.MotivoCancelamento,
+                CanceladoPor = a.CanceladoPor,
                 CriadoEm = a.CriadoEm
             });
 
@@ -166,6 +179,64 @@ public class AgendamentoController : ControllerBase
                 id = HashIdHelper.Encode(id),
                 message = "Agendamento realizado com sucesso."
             });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPatch("{id}/cancelar")]
+    [Authorize(Roles = "Cliente")]
+    public async Task<IActionResult> Cancelar(string id, [FromBody] CancelamentoRequestDTO request)
+    {
+        var emailClienteToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailClienteToken))
+            return Unauthorized("Token inválido.");
+
+        var agendamentoId = HashIdHelper.Decode(id);
+        if (agendamentoId == 0) return BadRequest("Id inválido.");
+
+        if (string.IsNullOrWhiteSpace(request.Motivo))
+            return BadRequest("O motivo do cancelamento é obrigatório.");
+
+        try
+        {
+            await _service.CancelarMeuAgendamento(agendamentoId, emailClienteToken, request.Motivo);
+            return Ok(new { message = "Agendamento cancelado com sucesso." });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPatch("{id}/cancelar-gestor")]
+    [Authorize(Roles = "Gestor")]
+    public async Task<IActionResult> CancelarComoGestor(string id, [FromBody] CancelamentoRequestDTO request)
+    {
+        var emailGestorToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailGestorToken))
+            return Unauthorized("Token inválido.");
+
+        var agendamentoId = HashIdHelper.Decode(id);
+        if (agendamentoId == 0) return BadRequest("Id inválido.");
+
+        if (string.IsNullOrWhiteSpace(request.Motivo))
+            return BadRequest("O motivo do cancelamento é obrigatório.");
+
+        try
+        {
+            await _service.CancelarComoGestor(agendamentoId, emailGestorToken, request.Motivo);
+            return Ok(new { message = "Agendamento cancelado com sucesso." });
         }
         catch (UnauthorizedAccessException)
         {

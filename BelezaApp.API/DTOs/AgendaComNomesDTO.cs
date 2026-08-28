@@ -12,6 +12,6 @@ public class AgendaComNomesDTO
     public DateOnly DataAgendamento { get; set; }
     public TimeOnly HoraInicio { get; set; }
     public TimeOnly HoraFim { get; set; }
-    public bool Disponivel { get; set; }
+    public string Status { get; set; } = string.Empty;
     public DateTime CriadoEm { get; set; }
 }

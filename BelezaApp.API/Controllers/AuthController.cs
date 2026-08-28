@@ -12,10 +12,12 @@ using BelezaApp.API.Helpers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IEnderecoService _enderecoService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IEnderecoService enderecoService)
     {
         _authService = authService;
+        _enderecoService = enderecoService;
     }
 
     [HttpPost("cadastro/usuario")]
@@ -34,8 +36,8 @@ public class AuthController : ControllerBase
 
         try
         {
-            await _authService.CadastrarUsuario(usuario);
-            return Created("", new { message = "Cadastro realizado com sucesso." });
+            var id = await _authService.CadastrarUsuario(usuario);
+            return Created("", new { id = HashIdHelper.Encode(id), message = "Cadastro realizado com sucesso." });
         }
         catch (Exception ex)
         {
@@ -56,7 +58,24 @@ public class AuthController : ControllerBase
 
         try
         {
-            await _authService.CadastrarCliente(cliente);
+            var clienteId = await _authService.CadastrarCliente(cliente);
+
+            if (!string.IsNullOrEmpty(request.Cep))
+            {
+                var endereco = new Endereco
+                {
+                    ClienteId = clienteId,
+                    Logradouro = request.Logradouro ?? "",
+                    Numero = request.Numero ?? "",
+                    Complemento = request.Complemento,
+                    Bairro = request.Bairro ?? "",
+                    Cidade = request.Cidade ?? "",
+                    Estado = request.Estado ?? "",
+                    Cep = request.Cep
+                };
+                await _enderecoService.CriarDireto(endereco);
+            }
+
             return Created("", new { message = "Cadastro realizado com sucesso." });
         }
         catch (Exception ex)

@@ -82,6 +82,13 @@ builder.Services.AddScoped<IAgendamentoService, AgendamentoService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddHttpClient<IViaCepService, ViaCepService>();
+
+builder.Services.AddHttpClient<IGeocodingService, GeocodingService>(client =>
+{
+    client.DefaultRequestHeaders.Add("User-Agent", "Belagora-TCC/1.0");
+});
+
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new BelezaApp.API.Converters.DateTimeConverter());

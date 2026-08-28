@@ -12,6 +12,8 @@ public class Agendamento
     public TimeOnly HorarioInicio { get; set; }
     public TimeOnly HorarioFim { get; set; }
     public string Status { get; set; } = "Confirmado";
+    public string? MotivoCancelamento { get; set; }
+    public string? CanceladoPor { get; set; }
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

@@ -1,0 +1,26 @@
+namespace BelezaApp.API.Helpers;
+
+public static class DistanciaHelper
+{
+    private const double RaioTerraKm = 6371.0;
+
+    public static double CalcularDistanciaKm(decimal lat1, decimal lng1, decimal lat2, decimal lng2)
+    {
+        var dLat = GrausParaRadianos((double)(lat2 - lat1));
+        var dLng = GrausParaRadianos((double)(lng2 - lng1));
+
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
+              + Math.Cos(GrausParaRadianos((double)lat1))
+              * Math.Cos(GrausParaRadianos((double)lat2))
+              * Math.Sin(dLng / 2) * Math.Sin(dLng / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+        return RaioTerraKm * c;
+    }
+
+    private static double GrausParaRadianos(double graus)
+    {
+        return graus * (Math.PI / 180.0);
+    }
+}

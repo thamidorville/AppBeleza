@@ -18,9 +18,11 @@ public class AgendamentoRepository : IAgendamentoRepository
     {
         var sql = @"SELECT ag.id, ag.agenda_id, ag.cliente_id, ag.servico_id,
                            ag.funcionario_id, ag.usuario_id, ag.data,
-                           ag.horario_inicio, ag.horario_fim, ag.status, ag.criado_em,
+                           ag.horario_inicio, ag.horario_fim, ag.status,
+                           ag.motivo_cancelamento, ag.cancelado_por, ag.criado_em,
                            c.nome AS cliente_nome,
                            s.nome AS servico_nome,
+                           s.preco AS servico_preco,
                            f.nome AS funcionario_nome,
                            u.nome AS usuario_nome
                     FROM Agendamento ag
@@ -37,9 +39,11 @@ public class AgendamentoRepository : IAgendamentoRepository
     {
         var sql = @"SELECT ag.id, ag.agenda_id, ag.cliente_id, ag.servico_id,
                            ag.funcionario_id, ag.usuario_id, ag.data,
-                           ag.horario_inicio, ag.horario_fim, ag.status, ag.criado_em,
+                           ag.horario_inicio, ag.horario_fim, ag.status,
+                           ag.motivo_cancelamento, ag.cancelado_por, ag.criado_em,
                            c.nome AS cliente_nome,
                            s.nome AS servico_nome,
+                           s.preco AS servico_preco,
                            f.nome AS funcionario_nome,
                            u.nome AS usuario_nome
                     FROM Agendamento ag
@@ -64,6 +68,12 @@ public class AgendamentoRepository : IAgendamentoRepository
         return await _connection.QueryFirstOrDefaultAsync<Agendamento>(sql, new { Id = id });
     }
 
+    public async Task<Agendamento?> ObterPorClienteEAgenda(int clienteId, int agendaId)
+    {
+        var sql = "SELECT * FROM Agendamento WHERE cliente_id = @ClienteId AND agenda_id = @AgendaId";
+        return await _connection.QueryFirstOrDefaultAsync<Agendamento>(sql, new { ClienteId = clienteId, AgendaId = agendaId });
+    }
+
     public async Task<int> Criar(Agendamento agendamento)
     {
         var sql = @"INSERT INTO Agendamento (agenda_id, cliente_id, servico_id, funcionario_id, usuario_id, data, horario_inicio, horario_fim, status)
@@ -76,5 +86,16 @@ public class AgendamentoRepository : IAgendamentoRepository
     {
         var sql = "UPDATE Agendamento SET status = @Status::status_agendamento_enum, atualizado_em = NOW() WHERE id = @Id";
         await _connection.ExecuteAsync(sql, new { Id = id, Status = status });
+    }
+
+    public async Task Cancelar(int id, string motivo, string canceladoPor)
+    {
+        var sql = @"UPDATE Agendamento
+                    SET status = 'Cancelado'::status_agendamento_enum,
+                        motivo_cancelamento = @Motivo,
+                        cancelado_por = @CanceladoPor,
+                        atualizado_em = NOW()
+                    WHERE id = @Id";
+        await _connection.ExecuteAsync(sql, new { Id = id, Motivo = motivo, CanceladoPor = canceladoPor });
     }
 }

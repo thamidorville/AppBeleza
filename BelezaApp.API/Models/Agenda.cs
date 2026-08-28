@@ -9,7 +9,7 @@ public class Agenda
     public DateOnly DataAgendamento { get; set; }
     public TimeOnly HoraInicio { get; set; }
     public TimeOnly HoraFim { get; set; }
-    public bool Disponivel { get; set; } = true;
+    public string Status { get; set; } = "Disponivel";
     public DateTime CriadoEm { get; set; }
     public DateTime AtualizadoEm { get; set; }
 }

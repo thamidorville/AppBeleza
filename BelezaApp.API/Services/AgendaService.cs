@@ -58,13 +58,44 @@ public class AgendaService : IAgendaService
         return await _repository.Criar(agenda);
     }
 
-    public async Task Atualizar(Agenda agenda)
+    public async Task Atualizar(Agenda agenda, string emailUsuarioToken)
     {
+        var usuario = await _usuarioRepository.ObterPorEmail(emailUsuarioToken);
+        if (usuario == null)
+            throw new UnauthorizedAccessException("Usuário não encontrado.");
+
+        var existente = await _repository.ObterPorId(agenda.Id);
+        if (existente == null)
+            throw new InvalidOperationException("Agenda não encontrada.");
+
+        if (existente.UsuarioId != usuario.Id)
+            throw new UnauthorizedAccessException("Esta agenda não pertence a você.");
+
+        if (agenda.HoraFim <= agenda.HoraInicio)
+            throw new InvalidOperationException("O horário de fim deve ser posterior ao horário de início.");
+
+        agenda.UsuarioId = existente.UsuarioId;
+        agenda.Status = existente.Status;
+
         await _repository.Atualizar(agenda);
     }
 
-    public async Task Deletar(int id)
+    public async Task Deletar(int id, string emailUsuarioToken)
     {
+        var usuario = await _usuarioRepository.ObterPorEmail(emailUsuarioToken);
+        if (usuario == null)
+            throw new UnauthorizedAccessException("Usuário não encontrado.");
+
+        var existente = await _repository.ObterPorId(id);
+        if (existente == null)
+            throw new InvalidOperationException("Agenda não encontrada.");
+
+        if (existente.UsuarioId != usuario.Id)
+            throw new UnauthorizedAccessException("Esta agenda não pertence a você.");
+
+        if (existente.Status != "Disponivel")
+            throw new InvalidOperationException("Não é possível remover uma agenda com agendamento ativo. Cancele o agendamento primeiro.");
+
         await _repository.Deletar(id);
     }
 }

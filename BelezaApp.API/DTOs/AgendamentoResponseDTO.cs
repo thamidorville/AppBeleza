@@ -8,6 +8,7 @@ public class AgendamentoResponseDTO
     public string ClienteNome { get; set; } = string.Empty;
     public string ServicoId { get; set; } = string.Empty;
     public string ServicoNome { get; set; } = string.Empty;
+    public decimal ServicoPreco { get; set; }
     public string? FuncionarioId { get; set; }
     public string? FuncionarioNome { get; set; }
     public string UsuarioId { get; set; } = string.Empty;
@@ -16,5 +17,7 @@ public class AgendamentoResponseDTO
     public TimeOnly HorarioInicio { get; set; }
     public TimeOnly HorarioFim { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string? MotivoCancelamento { get; set; }
+    public string? CanceladoPor { get; set; }
     public DateTime CriadoEm { get; set; }
 }

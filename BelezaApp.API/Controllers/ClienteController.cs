@@ -6,16 +6,100 @@ using BelezaApp.API.DTOs;
 using BelezaApp.API.Models;
 using BelezaApp.API.Services;
 using BelezaApp.API.Helpers;
+using BelezaApp.API.Repositories;
 
 [ApiController]
 [Route("api/[controller]")]
 public class ClienteController : ControllerBase
 {
     private readonly IClienteService _service;
+    private readonly IEnderecoRepository _enderecoRepository;
+    private readonly IEnderecoService _enderecoService;
 
-    public ClienteController(IClienteService service)
+    public ClienteController(IClienteService service, IEnderecoRepository enderecoRepository, IEnderecoService enderecoService)
     {
         _service = service;
+        _enderecoRepository = enderecoRepository;
+        _enderecoService = enderecoService;
+    }
+
+    [HttpGet("meu-perfil")]
+    [Authorize(Roles = "Cliente")]
+    public async Task<IActionResult> ObterMeuPerfil()
+    {
+        var emailClienteToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailClienteToken))
+            return Unauthorized("Token inválido.");
+
+        var cliente = await _service.ObterPorEmail(emailClienteToken);
+        if (cliente == null)
+            return NotFound("Cliente não encontrado.");
+
+        var endereco = await _enderecoRepository.ObterPorClienteId(cliente.Id);
+
+        return Ok(new
+        {
+            nome = cliente.Nome,
+            email = cliente.Email,
+            telefone = cliente.Telefone,
+            endereco = endereco != null ? new
+            {
+                id = HashIdHelper.Encode(endereco.Id),
+                logradouro = endereco.Logradouro,
+                numero = endereco.Numero,
+                complemento = endereco.Complemento,
+                bairro = endereco.Bairro,
+                cidade = endereco.Cidade,
+                estado = endereco.Estado,
+                cep = endereco.Cep
+            } : null
+        });
+    }
+
+    [HttpPut("meu-perfil")]
+    [Authorize(Roles = "Cliente")]
+    public async Task<IActionResult> AtualizarMeuPerfil([FromBody] PerfilClienteRequestDTO request)
+    {
+        var emailClienteToken = TokenClaimsHelper.ObterEmail(User);
+        if (string.IsNullOrEmpty(emailClienteToken))
+            return Unauthorized("Token inválido.");
+
+        var cliente = await _service.ObterPorEmail(emailClienteToken);
+        if (cliente == null)
+            return NotFound("Cliente não encontrado.");
+
+        cliente.Nome = request.Nome;
+        cliente.Telefone = request.Telefone;
+        await _service.Atualizar(cliente);
+
+        if (!string.IsNullOrEmpty(request.Cep))
+        {
+            var enderecoExistente = await _enderecoRepository.ObterPorClienteId(cliente.Id);
+
+            var endereco = new Endereco
+            {
+                ClienteId = cliente.Id,
+                Logradouro = request.Logradouro ?? "",
+                Numero = request.Numero ?? "",
+                Complemento = request.Complemento,
+                Bairro = request.Bairro ?? "",
+                Cidade = request.Cidade ?? "",
+                Estado = request.Estado ?? "",
+                Cep = request.Cep
+            };
+
+            if (enderecoExistente != null)
+            {
+                endereco.Id = enderecoExistente.Id;
+                await _enderecoService.Atualizar(endereco);
+            }
+            else
+            {
+                await _enderecoService.CriarDireto(endereco);
+            }
+        }
+
+        return Ok(new { message = "Perfil atualizado com sucesso." });
     }
 
     [HttpGet]

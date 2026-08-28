@@ -12,6 +12,9 @@ public class AgendaResponseDTO
     public DateOnly DataAgendamento { get; set; }
     public TimeOnly HoraInicio { get; set; }
     public TimeOnly HoraFim { get; set; }
-    public bool Disponivel { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? EnderecoBairro { get; set; }
+    public string? EnderecoCidade { get; set; }
+    public double? DistanciaKm { get; set; }
     public DateTime CriadoEm { get; set; }
 }

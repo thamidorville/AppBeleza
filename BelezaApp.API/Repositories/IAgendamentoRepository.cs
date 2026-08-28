@@ -9,6 +9,8 @@ public interface IAgendamentoRepository
     Task<IEnumerable<AgendamentoComNomesDTO>> ObterPorUsuarioId(int usuarioId);
     Task<IEnumerable<Agendamento>> ObterPorFuncionarioId(int funcionarioId);
     Task<Agendamento?> ObterPorId(int id);
+    Task<Agendamento?> ObterPorClienteEAgenda(int clienteId, int agendaId);
     Task<int> Criar(Agendamento agendamento);
     Task AtualizarStatus(int id, string status);
+    Task Cancelar(int id, string motivo, string canceladoPor);
 }

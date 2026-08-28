@@ -3,7 +3,8 @@ namespace BelezaApp.API.Models;
 public class Endereco
 {
     public int Id { get; set; }
-    public int UsuarioId { get; set; }
+    public int? UsuarioId { get; set; }
+    public int? ClienteId { get; set; }
     public string Logradouro { get; set; } = string.Empty;
     public string Numero { get; set; } = string.Empty;
     public string? Complemento { get; set; }

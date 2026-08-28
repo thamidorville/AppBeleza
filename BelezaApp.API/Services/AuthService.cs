@@ -20,17 +20,17 @@ public class AuthService : IAuthService
         _clienteRepository = clienteRepository;
     }
 
-    public async Task CadastrarUsuario(Usuario usuario)
+    public async Task<int> CadastrarUsuario(Usuario usuario)
     {
         usuario.Senha = SenhaHelper.GerarHash(usuario.Senha);
         usuario.Role = "Gestor";
-        await _usuarioRepository.Criar(usuario);
+        return await _usuarioRepository.Criar(usuario);
     }
 
-    public async Task CadastrarCliente(Cliente cliente)
+    public async Task<int> CadastrarCliente(Cliente cliente)
     {
         cliente.Senha = SenhaHelper.GerarHash(cliente.Senha);
-        await _clienteRepository.Criar(cliente);
+        return await _clienteRepository.Criar(cliente);
     }
 
     public async Task<string> Login(string email, string senha)

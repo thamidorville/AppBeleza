@@ -11,6 +11,6 @@ public interface IAgendaService
     Task<IEnumerable<AgendaComNomesDTO>> ObterVitrineDoCliente();
     Task<Agenda?> ObterPorId(int id);
     Task<int> Criar(Agenda agenda, string emailUsuarioToken);
-    Task Atualizar(Agenda agenda);
-    Task Deletar(int id);
+    Task Atualizar(Agenda agenda, string emailUsuarioToken);
+    Task Deletar(int id, string emailUsuarioToken);
 }
